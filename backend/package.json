@@ -10,7 +10,10 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "media:fetch": "tsx scripts/fetch-youtube.ts",
+    "media:m3u": "tsx scripts/generate-m3u.ts",
+    "media:ingest": "tsx scripts/ingest-media.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

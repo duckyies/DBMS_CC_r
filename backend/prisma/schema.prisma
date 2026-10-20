@@ -72,8 +72,12 @@ model Song {
   duration     Int      // in seconds
   publish_date DateTime @db.Date
   genres       Json
-  listen_count Int      @default(0)
-  is_published Boolean  @default(true)
+  listen_count  Int?     // optional; null when unused
+  is_published  Boolean  @default(true)
+  file_path     String?  @db.VarChar(500)
+  downloaded_at DateTime?
+  album         String?  @db.VarChar(255)
+  cover_art_url String?  @db.VarChar(500)
 
   // Relations
   artists            Song_Artist_Relationship[]

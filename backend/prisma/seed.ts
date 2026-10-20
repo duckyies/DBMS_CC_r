@@ -119,7 +119,6 @@ async function main() {
           publish_date: s.publish_date,
           genres: s.genres,
           is_published: true,
-          listen_count: Math.floor(Math.random() * 50000),
           artists: {
             create: {
               artist_id: s.artist_id,

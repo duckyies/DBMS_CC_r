@@ -10,6 +10,7 @@ import songsRoutes from './routes/songs';
 import playlistsRoutes from './routes/playlists';
 import collaboratorsRoutes from './routes/collaborators';
 import followRoutes from './routes/follow';
+import mediaRoutes from './routes/media';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,6 +36,7 @@ app.use('/api/songs', songsRoutes);
 app.use('/api/playlists', playlistsRoutes);
 app.use('/api/playlists', collaboratorsRoutes);
 app.use('/api/users', followRoutes);
+app.use('/api/media', mediaRoutes);
 
 // ── Error Handler (must be last) ─────────────────────────────────────────
 app.use(errorHandler);

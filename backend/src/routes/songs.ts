@@ -28,7 +28,7 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
           where: { is_primary: true },
         },
       },
-      orderBy: { listen_count: 'desc' },
+      orderBy: { song_id: 'desc' },
       take: 50,
     });
 
@@ -118,20 +118,14 @@ router.post('/:id/listen', authenticate, async (req: Request, res: Response, nex
       finalListeningTime = song?.duration || 0;
     }
 
-    // Increment listen_count and log activity in a transaction
-    await prisma.$transaction([
-      prisma.song.update({
-        where: { song_id: songId },
-        data: { listen_count: { increment: 1 } },
-      }),
-      prisma.listening_Activity.create({
-        data: {
-          user_id: userId,
-          song_id: songId,
-          listening_time: Math.round(finalListeningTime),
-        },
-      }),
-    ]);
+    // Log listening activity (no artificial listen counter is maintained)
+    await prisma.listening_Activity.create({
+      data: {
+        user_id: userId,
+        song_id: songId,
+        listening_time: Math.round(finalListeningTime),
+      },
+    });
 
     res.json({ message: 'Listened' });
   } catch (err) {

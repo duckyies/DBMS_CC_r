@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Music2, Search, Clock, TrendingUp, Plus, ListMusic } from 'lucide-react';
+import { Music2, Search, Clock, Plus, ListMusic } from 'lucide-react';
 import { useToast } from '@/components/ui/toaster';
 
 interface Song {
@@ -16,8 +16,9 @@ interface Song {
   duration: number;
   publish_date: string;
   genres: string[];
-  listen_count: number;
   is_published: boolean;
+  file_path?: string | null;
+  downloaded_at?: string | null;
   artists: { artist: { name: string; user_id: number } }[];
 }
 
@@ -74,17 +75,6 @@ export function SongsPage() {
   }, []);
 
   const handleGenreClick = (g: string) => setGenre(genre === g ? '' : g);
-
-  const recordListen = async (song: Song) => {
-    try {
-      // Send the full song duration or a calculated playback time (e.g., Math.round(song.duration))
-      const timeListened = song.duration > 0 ? song.duration : 180;
-      await api.post(`/songs/${song.song_id}/listen`, { listening_time: timeListened });
-      setSongs((prev) =>
-        prev.map((s) => s.song_id === song.song_id ? { ...s, listen_count: s.listen_count + 1 } : s)
-      );
-    } catch { /* silently ignore */ }
-  };
 
   const addToPlaylist = async (playlistId: number) => {
     if (!addDialogSong) return;
@@ -154,19 +144,16 @@ export function SongsPage() {
         </Card>
       ) : (
         <div className="rounded-lg border border-border overflow-hidden">
-          <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-0 text-xs font-medium text-muted-foreground uppercase tracking-wide px-4 py-3 border-b border-border bg-muted/30">
+          <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 text-xs font-medium text-muted-foreground uppercase tracking-wide px-4 py-3 border-b border-border bg-muted/30">
             <span className="w-8">#</span>
             <span>Title</span>
-            <span className="text-right w-20">Listens</span>
             <span className="text-right w-16 ml-4">Duration</span>
             <span className="w-10" />
           </div>
           {songs.map((song, idx) => (
             <div
               key={song.song_id}
-              className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-0 items-center px-4 py-3 hover:bg-accent/40 transition-colors border-b border-border last:border-0 group cursor-pointer"
-              onClick={() => recordListen(song)}
-              title="Click to count as listened"
+              className="grid grid-cols-[auto_1fr_auto_auto] gap-0 items-center px-4 py-3 hover:bg-accent/40 transition-colors border-b border-border last:border-0 group"
             >
               <span className="w-8 text-sm text-muted-foreground">{idx + 1}</span>
               <div className="min-w-0">
@@ -186,10 +173,6 @@ export function SongsPage() {
                     </Badge>
                   ))}
                 </div>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground w-20 justify-end">
-                <TrendingUp className="h-3 w-3" />
-                {song.listen_count.toLocaleString()}
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground w-16 justify-end ml-4">
                 <Clock className="h-3 w-3" />

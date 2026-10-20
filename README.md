@@ -116,6 +116,7 @@ Copy `.env.example` to `.env` and adjust:
 | GET | `/api/artists?name=` | Search artists |
 | GET | `/api/artists/:userId` | Artist profile |
 | GET | `/api/songs?q=` | Search songs |
+| GET | `/api/media/*` | Serve local media files |
 | GET | `/api/playlists` | My playlists |
 | POST | `/api/playlists` | Create playlist |
 | GET | `/api/playlists/:id` | Playlist detail |
