@@ -39,15 +39,15 @@ This guide provides step-by-step instructions for deploying the MusicLib applica
    ```
 
 4. **Verify the Deployment**
-   - Open Docker Desktop and check the `dbms_cc_retry` application under the "Containers" tab. All three services (`music_db`, `music_backend`, `music_frontend`) should be running.
-   - Access the Frontend at [http://localhost:5173](http://localhost:5173).
-   - Access the Backend API Healthcheck at [http://localhost:3001/health](http://localhost:3001/health).
+   - Open Docker Desktop and check the `dbms_cc_retry` application under the "Containers" tab. All three services (`musiclib_py_db`, `musiclib_py_backend`, `musiclib_py_frontend`) should be running.
+   - Access the Frontend at [http://localhost:5273](http://localhost:5273).
+   - Access the Backend API Healthcheck at [http://localhost:3101/health](http://localhost:3101/health).
 
 ### Troubleshooting on Windows
 
 - **Port Conflicts (`bind: Only one usage of each socket address...`)**
-  If you have a local installation of MySQL running natively on Windows, it will be using port `3306`. The `docker-compose.yml` is configured to map the container's `3306` to your machine's `3307` to prevent this. 
-  If you see this error for port `3001` or `5173`, change the left side of the `ports:` definition in `docker-compose.yml` for the respective service.
+  If you have a local installation of MySQL running natively on Windows, it will be using port `3306`. The `docker-compose.yml` is configured to map the container's `3306` to your machine's `3407` to prevent this. 
+  If you see this error for another port, change `FRONTEND_PORT`, `BACKEND_PORT` or `DB_PORT` in `.env`.
   
 - **Docker Daemon Not Running**
   Ensure Docker Desktop is open and running in the background before running `docker-compose` commands.
@@ -123,14 +123,14 @@ This assumes a fresh Ubuntu 22.04 or 24.04 server instance (e.g., AWS EC2, Digit
 4. **Firewall Configuration (UFW)**
    If you are using a firewall, you need to expose the frontend and backend ports:
    ```bash
-   sudo ufw allow 5173/tcp
-   sudo ufw allow 3001/tcp
+   sudo ufw allow 5273/tcp
+   sudo ufw allow 3101/tcp
    sudo ufw reload
    ```
 
 5. **Verify the Deployment**
    - Check container status: `docker compose ps`
-   - Access the application via your VM's public IP address: `http://<YOUR_VM_IP>:5173`
+   - Access the application via your VM's public IP address: `http://<YOUR_VM_IP>:5273`
    - (Note: Vite binds to `0.0.0.0` in the Dockerfile so it will be accessible externally).
 
 ### Updating the Application
@@ -150,19 +150,19 @@ The app runs the same way on an Azure Linux VM (Ubuntu 22.04/24.04 or Debian 12)
 from inside the cloned repo installs Docker, writes `.env` with generated secrets and runs `docker compose up -d --build`.
 
 1. **Open the ports in the Azure Network Security Group.** UFW alone is not enough; Azure blocks inbound traffic
-   by default. Allow TCP **5173** (the site). Port 3001 (direct API access) is optional, since the browser reaches the API
+   by default. Allow TCP **5273** (the site). Port 3101 (direct API access) is optional, since the browser reaches the API
    through the frontend's `/api` proxy.
    ```bash
-   az vm open-port --resource-group <RESOURCE_GROUP> --name <VM_NAME> --port 5173 --priority 1010
+   az vm open-port --resource-group <RESOURCE_GROUP> --name <VM_NAME> --port 5273 --priority 1010
    ```
    (or add an inbound rule in the portal: VM -> Networking).
-2. **Browse to** `http://<VM_PUBLIC_IP_OR_DNS_NAME>:5173` and log in with `alice` / `password123`.
-3. **MySQL is not exposed.** `docker-compose.yml` publishes it on `127.0.0.1:3307` only (Docker-published ports bypass UFW),
+2. **Browse to** `http://<VM_PUBLIC_IP_OR_DNS_NAME>:5273` and log in with `alice` / `password123`.
+3. **MySQL is not exposed.** `docker-compose.yml` publishes it on `127.0.0.1:3407` only (Docker-published ports bypass UFW),
    so connect with `docker compose exec db mysql -uroot -p music_library` or an SSH tunnel.
 4. **Check it is healthy:**
    ```bash
-   docker compose ps                      # music_backend should show "healthy"
-   curl http://localhost:3001/health      # {"status":"ok",...}
+   docker compose ps                      # musiclib_py_backend should show "healthy"
+   curl http://localhost:3101/health      # {"status":"ok",...}
    docker compose logs backend            # look for "Schema ready" and "Demo data ready"
    ```
 

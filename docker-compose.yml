@@ -1,15 +1,19 @@
 
+# Fixed project name + different host ports + different container names let this stack run
+# side by side with the original Node/Prisma stack on the same machine.
+name: musiclib-py
+
 services:
   db:
     image: mysql:8.0
-    container_name: music_db
+    container_name: musiclib_py_db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
       # Bound to the VM's loopback only: Docker-published ports bypass UFW, so never expose MySQL publicly.
-      - "127.0.0.1:3307:3306"
+      - "127.0.0.1:${DB_PORT:-3407}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -25,16 +29,16 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: music_backend
+    container_name: musiclib_py_backend
     restart: unless-stopped
     environment:
       DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@db:3306/${MYSQL_DATABASE}
       JWT_SECRET: ${JWT_SECRET}
-      PORT: ${PORT:-3001}
+      PORT: 3001
       APP_ENV: ${APP_ENV:-production}
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
     ports:
-      - "${PORT:-3001}:${PORT:-3001}"
+      - "${BACKEND_PORT:-3101}:3001"
     depends_on:
       db:
         condition: service_healthy
@@ -51,12 +55,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: music_frontend
+    container_name: musiclib_py_frontend
     restart: unless-stopped
     environment:
-      VITE_API_URL: http://localhost:${PORT:-3001}
+      VITE_API_URL: http://localhost:${BACKEND_PORT:-3101}
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT:-5273}:5173"
     depends_on:
       - backend
     volumes:

@@ -21,12 +21,14 @@ docker-compose up --build
 ```
 
 Services will start at:
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:3001
-- **MySQL:** localhost:3307 (Note: Changed from 3306 to 3307 to avoid local MySQL conflicts)
+- **Frontend:** http://localhost:5273
+- **Backend API:** http://localhost:3101
+- **MySQL:** 127.0.0.1:3407 (host-only)
+
+These host ports differ from the original Node/Prisma version (5173 / 3001 / 3307) on purpose, so both stacks can run on the same machine. Change them with `FRONTEND_PORT`, `BACKEND_PORT` and `DB_PORT` in `.env`.
 
 > [!NOTE]  
-> If you encounter a `ports are not available` error (e.g. `bind: Only one usage of each socket address is normally permitted`), it means a local service is already using that port. You can change the port mapping in `docker-compose.yml` (e.g., `"3307:3306"` for MySQL or `"3002:3001"` for backend).
+> If you encounter a `ports are not available` error (e.g. `bind: Only one usage of each socket address is normally permitted`), it means a local service is already using that port. You can change the port mapping in `docker-compose.yml` (or just set `FRONTEND_PORT`, `BACKEND_PORT` or `DB_PORT` in `.env`).
 
 ### 📖 Deployment Guides
 For detailed instructions on how to deploy this project from scratch on Windows or a fresh Linux VM, please see [DEPLOYMENT.md](./DEPLOYMENT.md).
@@ -102,7 +104,9 @@ Copy `.env.example` to `.env` and adjust:
 | `MYSQL_ROOT_PASSWORD` | MySQL root password |
 | `MYSQL_DATABASE` | Database name |
 | `JWT_SECRET` | Secret for JWT signing (the backend refuses to start without it) |
-| `PORT` | Backend API port (default: 3001) |
+| `FRONTEND_PORT` | Host port for the website (default: 5273) |
+| `BACKEND_PORT` | Host port for the API (default: 3101) |
+| `DB_PORT` | Host port for MySQL, bound to 127.0.0.1 (default: 3407) |
 | `APP_ENV` | `production` (default) or `development` (adds error details to 500 responses) |
 | `SEED_DEMO_DATA` | `true` (default) loads the demo accounts on startup; `false` for an empty database |
 

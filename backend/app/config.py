@@ -20,7 +20,7 @@ class Settings:
         self.cors_origins = [
             o.strip()
             for o in os.environ.get(
-                "CORS_ORIGINS", "http://localhost:5173,http://frontend:5173"
+                "CORS_ORIGINS", "http://localhost:5273,http://frontend:5173"
             ).split(",")
             if o.strip()
         ]

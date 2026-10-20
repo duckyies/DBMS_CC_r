@@ -112,12 +112,14 @@ fi
 
 # ── 6. Configure UFW firewall ─────────────────────────────────────────────────
 info "Configuring UFW firewall..."
-sudo ufw --force reset
+# Additive on purpose (no 'ufw reset'): another stack on this VM may rely on its own rules.
+FRONTEND_PORT=$(grep -E '^FRONTEND_PORT=' "$APP_DIR/.env" 2>/dev/null | cut -d= -f2); FRONTEND_PORT=${FRONTEND_PORT:-5273}
+BACKEND_PORT=$(grep -E '^BACKEND_PORT=' "$APP_DIR/.env" 2>/dev/null | cut -d= -f2);   BACKEND_PORT=${BACKEND_PORT:-3101}
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow 22/tcp        # SSH — never block this!
-sudo ufw allow 5173/tcp      # Frontend (Vite dev server)
-sudo ufw allow 3001/tcp      # Backend API
+sudo ufw allow "${FRONTEND_PORT}"/tcp      # Frontend (Vite dev server)
+sudo ufw allow "${BACKEND_PORT}"/tcp       # Backend API
 # Uncomment if you add an Nginx reverse proxy later:
 # sudo ufw allow 80/tcp
 # sudo ufw allow 443/tcp
@@ -141,12 +143,12 @@ echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}  MusicLib is up!${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
-echo -e "  Frontend : ${YELLOW}http://${PUBLIC_IP:-<VM_IP>}:5173${NC}"
-echo -e "  Backend  : ${YELLOW}http://${PUBLIC_IP:-<VM_IP>}:3001/health${NC}"
+echo -e "  Frontend : ${YELLOW}http://${PUBLIC_IP:-<VM_IP>}:${FRONTEND_PORT:-5273}${NC}"
+echo -e "  Backend  : ${YELLOW}http://${PUBLIC_IP:-<VM_IP>}:${BACKEND_PORT:-3101}/health${NC}"
 echo ""
 echo -e "  Demo login — Username: alice  Password: password123"
 echo ""
-warn "AZURE: UFW is not enough. Add an inbound rule for TCP 5173 (and 3001 if you want direct API access)"
+warn "AZURE: UFW is not enough. Add an inbound rule for TCP ${FRONTEND_PORT:-5273} (and ${BACKEND_PORT:-3101} if you want direct API access)"
 warn "       to the VM's Network Security Group, otherwise the site is unreachable from outside."
 warn "IMPORTANT: Credentials are saved to $APP_DIR/.env"
 warn "Never commit this file to Git!"
