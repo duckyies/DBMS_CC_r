@@ -11,8 +11,8 @@
 | **Playlist_Song** | `playlist_id` (FK→Playlist), `song_id` (FK→Song), `order` (int) – Composite PK |
 | **Playlist_Collaborator** | `playlist_id` (FK→Playlist), `user_id` (FK→User) – Composite PK. (This table stores users who have edit/view access besides the creator. The creator is inferred from `Playlist.created_by_user_id`). |
 | **Follow** | `follower_user_id` (FK→User), `followed_user_id` (FK→User) – Composite PK. |
-| **Listening_Activity** | **(IGNORE for implementation)** – Keep schema in Prisma but do not populate or create APIs for it. |
-| **Lyrics** | **(IGNORE for implementation)** – Keep schema in Prisma but do not populate or create APIs for it. |
+| **Listening_Activity** | **(IGNORE for implementation)** – Keep the tables in `backend/db/schema.sql` but do not seed them or create APIs for them (`Listening_Activity` is only written by `POST /api/songs/:id/listen`). |
+| **Lyrics** | **(IGNORE for implementation)** – Keep the tables in `backend/db/schema.sql` but do not seed them or create APIs for them (`Listening_Activity` is only written by `POST /api/songs/:id/listen`). |
 
 ---
 

@@ -1,21 +1,23 @@
-FROM node:20-slim
+FROM python:3.12-slim
 
-# Install OpenSSL — required by Prisma's query engine
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
 # Install dependencies first (layer caching)
-COPY package*.json ./
-RUN npm install
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-# Copy source
+# Copy source (app/ and db/schema.sql + db/seed.sql)
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
+# Run as an unprivileged user
+RUN useradd --system --no-create-home appuser
+USER appuser
 
 EXPOSE 3001
 
-# Start with tsx for TypeScript support, run migrations and seed on startup
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npx tsx src/index.ts"]
+# The app creates any missing tables and loads the demo data itself on startup (see app/db.py)
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-3001}"]

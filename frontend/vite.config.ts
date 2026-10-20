@@ -12,6 +12,8 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    // Allow access through the VM's public DNS name (e.g. myvm.region.cloudapp.azure.com), not just its IP
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: 'http://backend:3001',

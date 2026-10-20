@@ -96,16 +96,17 @@ if [[ -d "$APP_DIR" ]]; then
   sed -i "s|^MYSQL_ROOT_PASSWORD=.*|MYSQL_ROOT_PASSWORD=${DB_PASS}|" .env
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=mysql://root:${DB_PASS}@db:3306/music_library|" .env
 
-  # Auto-detect public IP (GCP metadata server → AWS → fallback)
-  PUBLIC_IP=$(curl -sf --max-time 3 \
+  # Auto-detect public IP (Azure metadata server → GCP → AWS → fallback). Only used for the final printout:
+  # the browser reaches the API through the frontend's /api proxy, so no API URL needs to be configured.
+  PUBLIC_IP=$(curl -sf --max-time 3 -H "Metadata: true" \
+    "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2021-02-01&format=text" 2>/dev/null \
+    || curl -sf --max-time 3 \
     http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/externalIp \
     -H "Metadata-Flavor: Google" 2>/dev/null \
     || curl -sf --max-time 3 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null \
     || hostname -I | awk '{print $1}')
 
-  sed -i "s|^VITE_API_URL=.*|VITE_API_URL=http://${PUBLIC_IP}:3001|" .env
-
-  info "Set VITE_API_URL=http://${PUBLIC_IP}:3001"
+  info "Detected public IP: ${PUBLIC_IP}"
   info "Credentials written to: $APP_DIR/.env"
 fi
 
@@ -145,6 +146,8 @@ echo -e "  Backend  : ${YELLOW}http://${PUBLIC_IP:-<VM_IP>}:3001/health${NC}"
 echo ""
 echo -e "  Demo login — Username: alice  Password: password123"
 echo ""
+warn "AZURE: UFW is not enough. Add an inbound rule for TCP 5173 (and 3001 if you want direct API access)"
+warn "       to the VM's Network Security Group, otherwise the site is unreachable from outside."
 warn "IMPORTANT: Credentials are saved to $APP_DIR/.env"
 warn "Never commit this file to Git!"
 echo ""

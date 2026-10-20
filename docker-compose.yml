@@ -8,7 +8,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
-      - "3307:3306"
+      # Bound to the VM's loopback only: Docker-published ports bypass UFW, so never expose MySQL publicly.
+      - "127.0.0.1:3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -30,15 +31,19 @@ services:
       DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@db:3306/${MYSQL_DATABASE}
       JWT_SECRET: ${JWT_SECRET}
       PORT: ${PORT:-3001}
-      NODE_ENV: development
+      APP_ENV: ${APP_ENV:-production}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
     ports:
       - "${PORT:-3001}:${PORT:-3001}"
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://localhost:%s/health' % os.environ.get('PORT', '3001'), timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
     networks:
       - app_network
 

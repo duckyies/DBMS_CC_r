@@ -141,3 +141,38 @@ cd DBMS_CC_retry
 git pull origin main
 docker compose up -d --build
 ```
+
+---
+
+## 3. Azure VM notes
+
+The app runs the same way on an Azure Linux VM (Ubuntu 22.04/24.04 or Debian 12): `bash setup-vm.sh --skip-clone`
+from inside the cloned repo installs Docker, writes `.env` with generated secrets and runs `docker compose up -d --build`.
+
+1. **Open the ports in the Azure Network Security Group.** UFW alone is not enough; Azure blocks inbound traffic
+   by default. Allow TCP **5173** (the site). Port 3001 (direct API access) is optional, since the browser reaches the API
+   through the frontend's `/api` proxy.
+   ```bash
+   az vm open-port --resource-group <RESOURCE_GROUP> --name <VM_NAME> --port 5173 --priority 1010
+   ```
+   (or add an inbound rule in the portal: VM -> Networking).
+2. **Browse to** `http://<VM_PUBLIC_IP_OR_DNS_NAME>:5173` and log in with `alice` / `password123`.
+3. **MySQL is not exposed.** `docker-compose.yml` publishes it on `127.0.0.1:3307` only (Docker-published ports bypass UFW),
+   so connect with `docker compose exec db mysql -uroot -p music_library` or an SSH tunnel.
+4. **Check it is healthy:**
+   ```bash
+   docker compose ps                      # music_backend should show "healthy"
+   curl http://localhost:3001/health      # {"status":"ok",...}
+   docker compose logs backend            # look for "Schema ready" and "Demo data ready"
+   ```
+
+### Upgrading a VM that ran the old Node/Prisma version
+
+Your existing `mysql_data` volume keeps working: the Python backend adopts the tables Prisma created
+(`CREATE TABLE IF NOT EXISTS`) and the demo seed only inserts what is missing. Existing logins and JWTs stay valid
+(same bcrypt hashes, same `JWT_SECRET`). The leftover `_prisma_migrations` table is harmless and can be dropped.
+```bash
+git pull
+docker compose up -d --build
+```
+To start from a clean database instead: `docker compose down -v` (this deletes all data), then `docker compose up -d --build`.

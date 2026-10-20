@@ -2,17 +2,18 @@
 .env
 *.env.local
 
-# Node modules
+# Node modules (frontend)
 node_modules/
-backend/node_modules/
 frontend/node_modules/
 
-# Build outputs
-backend/dist/
-frontend/dist/
+# Python (backend)
+__pycache__/
+*.pyc
+.venv/
+venv/
 
-# Prisma
-backend/prisma/migrations/dev.db
+# Build outputs
+frontend/dist/
 
 # Logs
 *.log

@@ -4,8 +4,8 @@ A full-stack containerized web application for managing music playlists, followi
 
 ## Tech Stack
 - **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui
-- **Backend:** Node.js + TypeScript + Express + Prisma ORM
-- **Database:** MySQL 8
+- **Backend:** Python 3.12 + FastAPI (served by Uvicorn)
+- **Database:** MySQL 8, accessed directly with SQL through PyMySQL (no ORM)
 - **Deployment:** Docker Compose
 
 ## Quick Start
@@ -72,15 +72,17 @@ DBMS_CC_retry/
 ├── .env.example
 ├── backend/
 │   ├── Dockerfile
-│   ├── prisma/
-│   │   ├── schema.prisma
-│   │   ├── seed.ts
-│   │   └── migrations/
-│   └── src/
-│       ├── index.ts
-│       ├── lib/prisma.ts
-│       ├── middleware/
-│       └── routes/
+│   ├── requirements.txt
+│   ├── db/
+│   │   ├── schema.sql      # CREATE TABLE statements (run on every start, idempotent)
+│   │   └── seed.sql        # demo users, songs, playlists (idempotent)
+│   └── app/
+│       ├── main.py         # FastAPI app, error handlers
+│       ├── config.py       # environment settings
+│       ├── db.py           # MySQL connections, transactions, schema/seed bootstrap
+│       ├── deps.py         # JWT + bcrypt helpers, auth dependency
+│       ├── queries.py      # shared SQL fragments and row -> JSON shaping
+│       └── routes/         # auth, users, artists, songs, playlists, collaborators, follow
 └── frontend/
     ├── Dockerfile
     ├── vite.config.ts
@@ -99,8 +101,18 @@ Copy `.env.example` to `.env` and adjust:
 |----------|-------------|
 | `MYSQL_ROOT_PASSWORD` | MySQL root password |
 | `MYSQL_DATABASE` | Database name |
-| `JWT_SECRET` | Secret for JWT signing |
+| `JWT_SECRET` | Secret for JWT signing (the backend refuses to start without it) |
 | `PORT` | Backend API port (default: 3001) |
+| `APP_ENV` | `production` (default) or `development` (adds error details to 500 responses) |
+| `SEED_DEMO_DATA` | `true` (default) loads the demo accounts on startup; `false` for an empty database |
+
+## Database
+
+There is no ORM and no migration tool. On startup the backend waits for MySQL, runs
+[`backend/db/schema.sql`](backend/db/schema.sql) (`CREATE TABLE IF NOT EXISTS`) and then
+[`backend/db/seed.sql`](backend/db/seed.sql). To change the schema, edit `schema.sql` (for an existing
+database, also run the matching `ALTER TABLE` by hand, since `IF NOT EXISTS` skips tables that exist).
+To poke around directly: `docker compose exec db mysql -uroot -p music_library`.
 
 ## API Endpoints
 
