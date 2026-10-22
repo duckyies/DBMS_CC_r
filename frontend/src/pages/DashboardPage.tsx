@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
-import { formatDuration } from '@/lib/utils';
+import { formatDuration, formatDate } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ListMusic, Users, Music2, Mic2, ArrowRight } from 'lucide-react';
+import { ListMusic, Users, Music2, Mic2, ArrowRight, Headphones } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 
 interface Playlist {
@@ -26,21 +26,33 @@ interface FollowedUser {
   artist?: { name: string } | null;
 }
 
+interface Listen {
+  activity_id: number;
+  listening_time: number;
+  timestamp: string;
+  song: { song_id: number; song_name: string; artist_name: string | null };
+}
+
 export function DashboardPage() {
   const { user } = useAuth();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [totalPlaylists, setTotalPlaylists] = useState<number>(0);
   const [following, setFollowing] = useState<FollowedUser[]>([]);
+  const [totalFollowing, setTotalFollowing] = useState<number>(0);
+  const [recentListens, setRecentListens] = useState<Listen[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       api.get('/playlists'),
       api.get('/users/me/following'),
-    ]).then(([pRes, fRes]) => {
+      api.get('/users/me/listening'),
+    ]).then(([pRes, fRes, lRes]) => {
       setTotalPlaylists(pRes.data.length);
       setPlaylists(pRes.data.slice(0, 3));
+      setTotalFollowing(fRes.data.length);
       setFollowing(fRes.data.slice(0, 5));
+      setRecentListens(lRes.data.slice(0, 5));
     }).finally(() => setLoading(false));
   }, []);
 
@@ -66,7 +78,7 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: 'Playlists', value: totalPlaylists, icon: ListMusic, color: 'text-primary' },
-          { label: 'Following', value: following.length, icon: Users, color: 'text-accent' },
+          { label: 'Following', value: totalFollowing, icon: Users, color: 'text-accent' },
           { label: 'Account Type', value: user?.is_artist ? 'Artist' : 'Listener', icon: user?.is_artist ? Mic2 : Music2, color: 'text-primary' },
         ].map(({ label, value, icon: Icon, color }) => (
           <Card key={label} className="hover:shadow-md transition-shadow">
@@ -127,6 +139,35 @@ export function DashboardPage() {
               </Link>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Recently played */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Recently Played</h2>
+        {recentListens.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              <Headphones className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <p>Nothing played yet. <Link to="/songs" className="text-primary hover:underline">Find a song!</Link></p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="divide-y divide-border p-0">
+              {recentListens.map((l) => (
+                <div key={l.activity_id} className="flex items-center justify-between px-6 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{l.song.song_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{l.song.artist_name || 'Unknown'}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground flex-shrink-0 ml-3">
+                    {formatDuration(l.listening_time)} · {formatDate(l.timestamp)}
+                  </p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         )}
       </div>
 

@@ -127,11 +127,14 @@ To poke around directly: `docker compose exec db mysql -uroot -p music_library`.
 | GET | `/api/auth/me` | Current user |
 | GET | `/api/users?username=` | Search users |
 | GET | `/api/users/me/following` | Get following list |
+| GET | `/api/users/me/listening` | My 20 most recent plays (Listening_Activity) |
 | POST | `/api/users/:id/follow` | Follow user |
 | DELETE | `/api/users/:id/follow` | Unfollow user |
 | GET | `/api/artists?name=` | Search artists |
 | GET | `/api/artists/:userId` | Artist profile |
-| GET | `/api/songs?q=` | Search songs |
+| GET | `/api/songs?q=&genre=` | Search songs (genre matches one whole genre) |
+| GET | `/api/songs/:id/lyrics` | Lyrics of a song |
+| POST | `/api/songs/:id/listen` | Count a listen and log it in Listening_Activity |
 | GET | `/api/playlists` | My playlists |
 | POST | `/api/playlists` | Create playlist |
 | GET | `/api/playlists/:id` | Playlist detail |

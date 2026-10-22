@@ -214,6 +214,9 @@ export function PlaylistDetailPage() {
 
   if (!playlist) return null;
 
+  // Owner and collaborators may change the songs; everyone else with access (shared playlist) can only look
+  const canEdit = isOwner || playlist.collaborators.some((c) => c.user.user_id === user?.user_id);
+
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Back button */}
@@ -288,7 +291,7 @@ export function PlaylistDetailPage() {
             <CardTitle className="text-lg flex items-center gap-2">
               <Music2 className="h-5 w-5" /> Songs
             </CardTitle>
-            {(isOwner || playlist.collaborators.some(c => c.user.user_id === user?.user_id)) && (
+            {canEdit && (
               <Dialog open={songDialogOpen} onOpenChange={setSongDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline" className="gap-1">
@@ -357,14 +360,16 @@ export function PlaylistDetailPage() {
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground text-xs flex-shrink-0">
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatDuration(ps.song.duration)}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 hover:text-destructive"
-                      onClick={() => setSongToRemove({ id: ps.song_id, name: ps.song.song_name })}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    {canEdit && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 hover:text-destructive"
+                        onClick={() => setSongToRemove({ id: ps.song_id, name: ps.song.song_name })}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -374,7 +379,7 @@ export function PlaylistDetailPage() {
       </Card>
 
       {/* Collaborators section */}
-      {(isOwner || playlist.is_shared) && (
+      {(canEdit || playlist.is_shared) && (
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">

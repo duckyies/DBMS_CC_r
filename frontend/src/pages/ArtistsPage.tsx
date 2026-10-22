@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Music2, Search, MapPin, Building2, Clock } from 'lucide-react';
+import { Music2, Search, MapPin, Building2, Clock, Users } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 
 interface ArtistSong {
+  role: string;
+  is_primary: boolean;
   song: {
     song_id: number;
     song_name: string;
@@ -28,6 +30,7 @@ interface Artist {
   created_at: string;
   production_house: { name: string; type: string } | null;
   user: { user_id: number; username: string; created_at: string };
+  band_members: { user_id: number; username: string }[];
   songs: ArtistSong[];
 }
 
@@ -139,6 +142,16 @@ export function ArtistsPage() {
                   </div>
                 )}
 
+                {selected.is_band && selected.band_members?.length > 0 && (
+                  <div className="flex items-center gap-2 text-sm flex-wrap">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Members:</span>
+                    {selected.band_members.map((m) => (
+                      <Badge key={m.user_id} variant="outline" className="text-[10px]">@{m.username}</Badge>
+                    ))}
+                  </div>
+                )}
+
                 {selected.country_of_origin && (
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -155,10 +168,13 @@ export function ArtistsPage() {
                     {!selected.songs || selected.songs.length === 0 ? (
                       <p className="text-sm text-muted-foreground">No songs yet.</p>
                     ) : (
-                      selected.songs.map(({ song }) => (
+                      selected.songs.map(({ song, role, is_primary }) => (
                         <div key={song?.song_id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{song?.song_name}</p>
+                            <p className="text-sm font-medium truncate">
+                              {song?.song_name}
+                              {!is_primary && <Badge variant="outline" className="ml-2 text-[10px]">{role}</Badge>}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {song?.publish_date ? formatDate(song.publish_date) : 'Unknown date'}
                               {Array.isArray(song?.genres) && song.genres.length > 0 ? ` · ${(song.genres as string[]).join(', ')}` : ''}

@@ -36,6 +36,38 @@ def my_following(user=Depends(current_user), db=Depends(get_db)):
         return respond([user_card(r, include_created_at=False) for r in cur.fetchall()])
 
 
+# Must be declared before /{user_id}
+@router.get("/me/listening")
+def my_listening(user=Depends(current_user), db=Depends(get_db)):
+    """The caller's 20 most recent plays, newest first (Listening_Activity joined to Song + its primary artist)."""
+    with transaction(db) as cur:
+        cur.execute(
+            "SELECT la.activity_id, la.listening_time, la.timestamp, "
+            "s.song_id, s.song_name, s.duration, "
+            "(SELECT a.name FROM Song_Artist_Relationship sar JOIN Artist a ON a.user_id = sar.artist_id "
+            " WHERE sar.song_id = s.song_id AND sar.is_primary = 1 ORDER BY sar.artist_id LIMIT 1) AS artist_name "
+            "FROM Listening_Activity la JOIN Song s ON s.song_id = la.song_id "
+            "WHERE la.user_id = %s ORDER BY la.timestamp DESC, la.activity_id DESC LIMIT 20",
+            (user["userId"],),
+        )
+        return respond(
+            [
+                {
+                    "activity_id": r["activity_id"],
+                    "listening_time": r["listening_time"],
+                    "timestamp": r["timestamp"],
+                    "song": {
+                        "song_id": r["song_id"],
+                        "song_name": r["song_name"],
+                        "duration": r["duration"],
+                        "artist_name": r["artist_name"],
+                    },
+                }
+                for r in cur.fetchall()
+            ]
+        )
+
+
 @router.get("/{user_id}")
 def get_user(user_id: int, _user=Depends(current_user), db=Depends(get_db)):
     with transaction(db) as cur:

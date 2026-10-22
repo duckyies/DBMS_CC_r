@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..db import get_db, transaction
 from ..deps import current_user
-from ..queries import PH_COLS, SONG_COLS, artist_dict, house_dict, like, song_dict
+from ..queries import PH_COLS, SONG_COLS, artist_dict, house_dict, json_col, like, song_dict
 from ..serializers import respond
 
 router = APIRouter(prefix="/api/artists")
@@ -14,7 +14,10 @@ _ARTIST_SELECT = (
 )
 
 
-def _songs_by_artist(cur, artist_ids: list[int], primary_only: bool, limit: int | None = None) -> dict[int, list]:
+def _songs_by_artist(
+    cur, artist_ids: list[int], primary_only: bool, viewer_id: int, limit: int | None = None
+) -> dict[int, list]:
+    """Songs per artist. Unpublished songs are only visible to the artist they belong to."""
     out: dict[int, list] = {i: [] for i in artist_ids}
     if not artist_ids:
         return out
@@ -23,9 +26,10 @@ def _songs_by_artist(cur, artist_ids: list[int], primary_only: bool, limit: int 
         f"SELECT sar.artist_id, sar.role, sar.is_primary, {SONG_COLS} "
         "FROM Song_Artist_Relationship sar JOIN Song s ON s.song_id = sar.song_id "
         f"WHERE sar.artist_id IN ({marks})" + (" AND sar.is_primary = 1" if primary_only else "") +
+        " AND (s.is_published = 1 OR sar.artist_id = %s)"
         " ORDER BY sar.artist_id, sar.song_id"
     )
-    params: list = list(artist_ids)
+    params: list = [*artist_ids, viewer_id]
     if limit is not None:
         sql += " LIMIT %s"
         params.append(limit)
@@ -43,19 +47,31 @@ def _songs_by_artist(cur, artist_ids: list[int], primary_only: bool, limit: int 
     return out
 
 
-def _artist_payload(row: dict, songs: list, user_with_created_at: bool) -> dict:
+def _band_members(cur, rows: list[dict]) -> dict[int, dict]:
+    """Resolve the user ids stored in Artist.band_member_ids (a JSON array, so no FK) to usernames."""
+    ids = sorted({m for r in rows for m in (json_col(r["band_member_ids"]) or []) if isinstance(m, int)})
+    if not ids:
+        return {}
+    cur.execute(
+        f"SELECT user_id, username FROM User WHERE user_id IN ({', '.join(['%s'] * len(ids))})", ids
+    )
+    return {r["user_id"]: {"user_id": r["user_id"], "username": r["username"]} for r in cur.fetchall()}
+
+
+def _artist_payload(row: dict, songs: list, user_with_created_at: bool, members: dict[int, dict]) -> dict:
     out = artist_dict(row)
     user = {"user_id": row["user_id"], "username": row["u_username"]}
     if user_with_created_at:
         user["created_at"] = row["u_created_at"]
     out["user"] = user
     out["production_house"] = house_dict(row)
+    out["band_members"] = [members[m] for m in (out["band_member_ids"] or []) if m in members]
     out["songs"] = songs
     return out
 
 
 @router.get("")
-def list_artists(name: str | None = None, _user=Depends(current_user), db=Depends(get_db)):
+def list_artists(name: str | None = None, user=Depends(current_user), db=Depends(get_db)):
     sql = _ARTIST_SELECT
     params: list = []
     if name:
@@ -66,18 +82,20 @@ def list_artists(name: str | None = None, _user=Depends(current_user), db=Depend
     with transaction(db) as cur:
         cur.execute(sql, params)
         rows = cur.fetchall()
-        songs = _songs_by_artist(cur, [r["user_id"] for r in rows], primary_only=False)
+        songs = _songs_by_artist(cur, [r["user_id"] for r in rows], primary_only=False, viewer_id=user["userId"])
+        members = _band_members(cur, rows)
 
-    return respond([_artist_payload(r, songs[r["user_id"]], user_with_created_at=False) for r in rows])
+    return respond([_artist_payload(r, songs[r["user_id"]], False, members) for r in rows])
 
 
 @router.get("/{user_id}")
-def get_artist(user_id: int, _user=Depends(current_user), db=Depends(get_db)):
+def get_artist(user_id: int, user=Depends(current_user), db=Depends(get_db)):
     with transaction(db) as cur:
         cur.execute(_ARTIST_SELECT + " WHERE a.user_id = %s", (user_id,))
         row = cur.fetchone()
         if not row:
             raise HTTPException(404, "Artist not found")
-        songs = _songs_by_artist(cur, [user_id], primary_only=True, limit=20)
+        songs = _songs_by_artist(cur, [user_id], primary_only=False, viewer_id=user["userId"], limit=20)
+        members = _band_members(cur, [row])
 
-    return respond(_artist_payload(row, songs[user_id], user_with_created_at=True))
+    return respond(_artist_payload(row, songs[user_id], True, members))

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Music2, Search, Clock, TrendingUp, Plus, ListMusic } from 'lucide-react';
+import { Music2, Search, Clock, TrendingUp, Plus, ListMusic, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/toaster';
 
 interface Song {
@@ -27,8 +27,17 @@ interface Playlist {
   creator: { user_id: number };
 }
 
-// All unique genres from the seed data
-const GENRE_OPTIONS = ['Pop', 'Rock', 'Hip-Hop', 'Jazz', 'Classical', 'Electronic', 'R&B', 'Country', 'Folk', 'Metal'];
+interface LyricsEntry {
+  lyrics_id: number;
+  lyrics_filename: string;
+  lyrics_text: string;
+}
+
+// Genres offered as quick filters (the API matches one whole genre per song, case-insensitively)
+const GENRE_OPTIONS = [
+  'Pop', 'Rock', 'Hip-Hop', 'Jazz', 'Classical', 'Electronic', 'R&B', 'Country', 'Folk', 'Metal',
+  'Indie', 'Alternative', 'Ambient', 'Soul', 'Latin', 'Dance',
+];
 
 export function SongsPage() {
   const { user } = useAuth();
@@ -43,6 +52,10 @@ export function SongsPage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [addDialogSong, setAddDialogSong] = useState<Song | null>(null);
   const [addingToPlaylist, setAddingToPlaylist] = useState<number | null>(null);
+
+  // Lyrics dialog
+  const [lyricsSong, setLyricsSong] = useState<Song | null>(null);
+  const [lyrics, setLyrics] = useState<LyricsEntry[] | null>(null);
 
   const fetchSongs = (q = '', g = '') => {
     setLoading(true);
@@ -61,18 +74,24 @@ export function SongsPage() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, genre]);
 
-  // Fetch playlists the user owns (for add-to-playlist)
+  // Playlists the user can add songs to: the API already returns only those they own or collaborate on
   useEffect(() => {
-    api.get('/playlists').then((r) =>
-      setPlaylists(r.data.filter((p: Playlist) => p.creator.user_id === user?.user_id))
-    );
+    api.get('/playlists').then((r) => setPlaylists(r.data));
   }, [user]);
+
+  const openLyrics = (song: Song) => {
+    setLyricsSong(song);
+    setLyrics(null);
+    api.get(`/songs/${song.song_id}/lyrics`)
+      .then((r) => setLyrics(r.data.lyrics))
+      .catch(() => setLyrics([]));
+  };
 
   const handleGenreClick = (g: string) => setGenre(genre === g ? '' : g);
 
-  const recordListen = async (songId: number) => {
+  const recordListen = async (songId: number, seconds: number) => {
     try {
-      await api.post(`/songs/${songId}/listen`, { listening_time: 0 });
+      await api.post(`/songs/${songId}/listen`, { listening_time: seconds });
       // Optimistically update count in UI
       setSongs((prev) =>
         prev.map((s) => s.song_id === songId ? { ...s, listen_count: s.listen_count + 1 } : s)
@@ -153,13 +172,13 @@ export function SongsPage() {
             <span>Title</span>
             <span className="text-right w-20">Listens</span>
             <span className="text-right w-16 ml-4">Duration</span>
-            <span className="w-10" />
+            <span className="w-16" />
           </div>
           {songs.map((song, idx) => (
             <div
               key={song.song_id}
               className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-0 items-center px-4 py-3 hover:bg-accent/40 transition-colors border-b border-border last:border-0 group cursor-pointer"
-              onClick={() => recordListen(song.song_id)}
+              onClick={() => recordListen(song.song_id, song.duration)}
               title="Click to count as listened"
             >
               <span className="w-8 text-sm text-muted-foreground">{idx + 1}</span>
@@ -189,7 +208,16 @@ export function SongsPage() {
                 <Clock className="h-3 w-3" />
                 {formatDuration(song.duration)}
               </div>
-              <div className="w-10 flex justify-end">
+              <div className="w-16 flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Lyrics"
+                  onClick={(e) => { e.stopPropagation(); openLyrics(song); }}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -204,6 +232,26 @@ export function SongsPage() {
           ))}
         </div>
       )}
+
+      {/* Lyrics dialog */}
+      <Dialog open={!!lyricsSong} onOpenChange={(open) => !open && setLyricsSong(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{lyricsSong?.song_name}</DialogTitle>
+          </DialogHeader>
+          {lyrics === null ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">Loading…</p>
+          ) : lyrics.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No lyrics available for this song.</p>
+          ) : (
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {lyrics.map((l) => (
+                <p key={l.lyrics_id} className="text-sm whitespace-pre-line">{l.lyrics_text}</p>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Add to Playlist dialog (F7) */}
       <Dialog open={!!addDialogSong} onOpenChange={(open) => !open && setAddDialogSong(null)}>
