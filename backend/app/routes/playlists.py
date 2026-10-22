@@ -205,7 +205,7 @@ def add_song(playlist_id: int, user=Depends(current_user), payload: dict = Depen
         if not _can_mutate(cur, playlist_id, user["userId"]):
             raise HTTPException(403, "Access denied")
 
-        cur.execute("SELECT 1 FROM Song WHERE song_id = %s", (song_id,))
+        cur.execute("SELECT 1 FROM Song WHERE song_id = %s AND is_published = 1", (song_id,))
         if not cur.fetchone():
             raise HTTPException(404, "Song not found")
 

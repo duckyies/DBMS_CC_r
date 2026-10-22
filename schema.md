@@ -11,8 +11,8 @@
 | **Playlist_Song** | `playlist_id` (FK→Playlist), `song_id` (FK→Song), `order` (int) – Composite PK |
 | **Playlist_Collaborator** | `playlist_id` (FK→Playlist), `user_id` (FK→User) – Composite PK. (This table stores users who have edit/view access besides the creator. The creator is inferred from `Playlist.created_by_user_id`). |
 | **Follow** | `follower_user_id` (FK→User), `followed_user_id` (FK→User) – Composite PK. |
-| **Listening_Activity** | **(IGNORE for implementation)** – Keep the tables in `backend/db/schema.sql` but do not seed them or create APIs for them (`Listening_Activity` is only written by `POST /api/songs/:id/listen`). |
-| **Lyrics** | **(IGNORE for implementation)** – Keep the tables in `backend/db/schema.sql` but do not seed them or create APIs for them (`Listening_Activity` is only written by `POST /api/songs/:id/listen`). |
+| **Listening_Activity** | `activity_id` (PK), `user_id` (FK→User), `song_id` (FK→Song), `listening_time` (seconds), `timestamp`. Written by `POST /api/songs/:id/listen`, read by `GET /api/users/me/listening` (Dashboard "Recently Played"). Seeded with demo plays. |
+| **Lyrics** | `lyrics_id` (PK), `song_id` (FK→Song), `lyrics_text`, `lyrics_filename`. Read-only via `GET /api/songs/:id/lyrics` (Songs page lyrics dialog). Seeded with placeholder lyrics. |
 
 ---
 
