@@ -1,0 +1,91 @@
+erDiagram
+    User ||--o| Artist : "extends"
+    Production_House |o--o{ Artist : "signs"
+    User ||--o{ Playlist : "creates"
+    User ||--o{ Playlist_Collaborator : "collaborates on"
+    Playlist ||--o{ Playlist_Collaborator : "has"
+    Playlist ||--o{ Playlist_Song : "contains"
+    Song ||--o{ Playlist_Song : "appears in"
+    Song ||--o{ Song_Artist_Relationship : "credits"
+    Artist ||--o{ Song_Artist_Relationship : "credited on"
+    User ||--o{ Follow : "follower"
+    User ||--o{ Follow : "followed"
+    User ||--o{ Listening_Activity : "plays"
+    Song ||--o{ Listening_Activity : "played as"
+    Song ||--o{ Lyrics : "has"
+    Artist }o..o{ User : "band_member_ids (JSON)"
+
+    User {
+        int user_id PK
+        varchar username UK
+        varchar password_hash
+        boolean is_artist
+        datetime created_at
+        datetime last_login
+    }
+    Artist {
+        int user_id PK, FK
+        varchar name
+        varchar country
+        boolean is_band
+        json band_member_ids
+        varchar country_of_origin
+        int production_house_id FK
+        datetime created_at
+    }
+    Production_House {
+        int production_house_id PK
+        varchar name UK
+        varchar type
+    }
+    Song {
+        int song_id PK
+        varchar song_name
+        int duration
+        date publish_date
+        json genres
+        int listen_count
+        boolean is_published
+    }
+    Song_Artist_Relationship {
+        int song_id PK, FK
+        int artist_id PK, FK
+        varchar role
+        boolean is_primary
+    }
+    Playlist {
+        int playlist_id PK
+        varchar name
+        int created_by_user_id FK
+        varchar cover_art_url
+        int duration
+        enum release_type
+        datetime last_updated
+        boolean is_shared
+    }
+    Playlist_Song {
+        int playlist_id PK, FK
+        int song_id PK, FK
+        int order
+    }
+    Playlist_Collaborator {
+        int playlist_id PK, FK
+        int user_id PK, FK
+    }
+    Follow {
+        int follower_user_id PK, FK
+        int followed_user_id PK, FK
+    }
+    Listening_Activity {
+        int activity_id PK
+        int user_id FK
+        int song_id FK
+        int listening_time
+        datetime timestamp
+    }
+    Lyrics {
+        int lyrics_id PK
+        int song_id FK
+        longtext lyrics_text
+        varchar lyrics_filename
+    }

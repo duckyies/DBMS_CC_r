@@ -25,45 +25,45 @@ FROM `User` u
 JOIN `Production_House` ph ON ph.name = 'Universal Music Group'
 WHERE u.username = 'charlie';
 
--- Songs (inserted only if no song with that name exists yet)
+-- Songs (inserted only if no song with that name exists yet; fixed listen counts keep the demo data reproducible)
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Midnight Dreams', 213, '2023-03-15', JSON_ARRAY('Pop', 'Synthwave'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Midnight Dreams', 213, '2023-03-15', JSON_ARRAY('Pop', 'Synthwave'), 38257, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Midnight Dreams');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Electric Horizon', 187, '2023-05-22', JSON_ARRAY('Electronic', 'Dance'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Electric Horizon', 187, '2023-05-22', JSON_ARRAY('Electronic', 'Dance'), 49307, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Electric Horizon');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Velvet Sky', 245, '2023-07-10', JSON_ARRAY('Indie', 'Pop'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Velvet Sky', 245, '2023-07-10', JSON_ARRAY('Indie', 'Pop'), 31765, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Velvet Sky');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Neon Lights', 198, '2023-09-01', JSON_ARRAY('Synthpop', 'Electro'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Neon Lights', 198, '2023-09-01', JSON_ARRAY('Synthpop', 'Electro'), 10904, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Neon Lights');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Starfall', 221, '2023-11-14', JSON_ARRAY('Pop', 'R&B'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Starfall', 221, '2023-11-14', JSON_ARRAY('Pop', 'R&B'), 9226, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Starfall');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Broken Compass', 264, '2022-06-20', JSON_ARRAY('Rock', 'Alternative'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Broken Compass', 264, '2022-06-20', JSON_ARRAY('Rock', 'Alternative'), 13420, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Broken Compass');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Storm Rider', 302, '2022-09-05', JSON_ARRAY('Rock', 'Blues'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Storm Rider', 302, '2022-09-05', JSON_ARRAY('Rock', 'Blues'), 39422, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Storm Rider');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Silver Lining', 178, '2023-01-12', JSON_ARRAY('Indie', 'Folk'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Silver Lining', 178, '2023-01-12', JSON_ARRAY('Indie', 'Folk'), 6852, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Silver Lining');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Ember Glow', 233, '2023-04-30', JSON_ARRAY('Pop', 'Soul'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Ember Glow', 233, '2023-04-30', JSON_ARRAY('Pop', 'Soul'), 15991, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Ember Glow');
 
 INSERT INTO `Song` (`song_name`, `duration`, `publish_date`, `genres`, `listen_count`, `is_published`)
-SELECT 'Frozen River', 289, '2023-08-18', JSON_ARRAY('Alternative', 'Ambient'), FLOOR(RAND() * 50000), TRUE
+SELECT 'Frozen River', 289, '2023-08-18', JSON_ARRAY('Alternative', 'Ambient'), 9401, TRUE
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `Song` WHERE song_name = 'Frozen River');
 
 -- Song <-> artist links

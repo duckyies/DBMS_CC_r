@@ -1,0 +1,95 @@
+classDiagram
+    direction LR
+    class User {
+        +int user_id
+        +String username
+        -String password_hash
+        +boolean is_artist
+        +DateTime created_at
+        +DateTime last_login
+        +register()
+        +login()
+        +follow(user_id)
+        +unfollow(user_id)
+    }
+    class Artist {
+        +String name
+        +String country
+        +boolean is_band
+        +List~int~ band_member_ids
+        +String country_of_origin
+    }
+    class Production_House {
+        +int production_house_id
+        +String name
+        +String type
+    }
+    class Song {
+        +int song_id
+        +String song_name
+        +int duration
+        +Date publish_date
+        +List~String~ genres
+        +int listen_count
+        +boolean is_published
+        +listen()
+        +getLyrics()
+    }
+    class Playlist {
+        +int playlist_id
+        +String name
+        +String cover_art_url
+        +int duration
+        +ReleaseType release_type
+        +boolean is_shared
+        +DateTime last_updated
+        +addSong(song_id)
+        +removeSong(song_id)
+        +addCollaborator(username)
+        +removeCollaborator(user_id)
+        +share()
+        +delete()
+    }
+    class PlaylistSong {
+        +int order
+    }
+    class PlaylistCollaborator {
+    }
+    class SongArtistRole {
+        +String role
+        +boolean is_primary
+    }
+    class Follow {
+    }
+    class ListeningActivity {
+        +int activity_id
+        +int listening_time
+        +DateTime timestamp
+    }
+    class Lyrics {
+        +int lyrics_id
+        +String lyrics_text
+        +String lyrics_filename
+    }
+    class ReleaseType {
+        <<enumeration>>
+        Single
+        EP
+        Album
+    }
+
+    User <|-- Artist : is a
+    Production_House "0..1" o-- "*" Artist : signs
+    User "1" --> "*" Playlist : creates
+    Playlist "1" *-- "*" PlaylistSong : contains
+    Song "1" --> "*" PlaylistSong : appears in
+    Playlist "1" *-- "*" PlaylistCollaborator : has
+    User "1" --> "*" PlaylistCollaborator : collaborates on
+    Song "1" *-- "*" SongArtistRole : credits
+    Artist "1" --> "*" SongArtistRole : credited as
+    User "1" --> "*" Follow : follower
+    User "1" --> "*" Follow : followed
+    User "1" --> "*" ListeningActivity : plays
+    Song "1" --> "*" ListeningActivity : played in
+    Song "1" *-- "*" Lyrics : has
+    Playlist ..> ReleaseType : uses
